@@ -1,0 +1,93 @@
+PROJECT: mini-timer
+AUTHOR: Student Name (Student ID)
+VERSION: v1
+DATE: 2026-03-29
+
+========================================
+OVERVIEW
+========================================
+
+mini-timer is a command-line Pomodoro and time-tracking tool.
+It lets the user start a timed session, stop it, view the session log,
+and see basic statistics.
+
+All persistent data is stored in a directory called .minitimer/
+in the current working directory.
+
+========================================
+COMMANDS
+========================================
+
+--- init ---
+Usage: python solution_v1.py init
+Creates a .minitimer/ directory and the files needed by the project.
+If .minitimer/ already exists, print "Already initialized" and exit.
+
+--- start ---
+Usage: python solution_v1.py start "Study session"
+Starts a new active timer session with the given label.
+Only one active session can exist at a time.
+If a session is already running, print "A timer is already running." and exit.
+If the project is not initialized, print "Not initialized. Run: python solution_v1.py init"
+
+--- stop ---
+Usage: python solution_v1.py stop
+Stops the active timer session.
+The program calculates the elapsed time in seconds and appends a record to the session log.
+If no active session exists, print "No active timer found."
+If the project is not initialized, print "Not initialized. Run: python solution_v1.py init"
+
+--- log ---
+Usage: python solution_v1.py log
+Prints all completed sessions, one per line, in the following format:
+  [1] Study session | started: 2026-03-29T18:00:00 | stopped: 2026-03-29T18:25:00 | duration: 1500s
+If no completed sessions exist, print "No sessions found."
+If the project is not initialized, print "Not initialized. Run: python solution_v1.py init"
+
+--- stats ---
+Usage: python solution_v1.py stats
+Prints a short summary of the session history:
+  Sessions: 3
+  Total duration: 4500s
+  Average duration: 1500s
+If no completed sessions exist, print "No sessions found."
+If the project is not initialized, print "Not initialized. Run: python solution_v1.py init"
+
+========================================
+DATA FORMAT
+========================================
+
+Directory: .minitimer/
+
+File: .minitimer/active.txt
+Stores one currently running session in this format:
+started_at_iso|label
+
+Example:
+2026-03-29T18:00:00|Study session
+
+File: .minitimer/sessions.log
+Stores one finished session per line in this format:
+started_at_iso|label|stopped_at_iso|duration_seconds
+
+Example:
+2026-03-29T18:00:00|Study session|2026-03-29T18:25:00|1500
+
+========================================
+ERROR HANDLING
+========================================
+
+- Running any command before "init": print "Not initialized. Run: python solution_v1.py init"
+- Invalid command: print "Unknown command: <command>"
+- Missing arguments: print "Usage: python solution_v1.py <command> [args]"
+- Starting a new session while one is already active: print "A timer is already running."
+- Stopping when no session is active: print "No active timer found."
+
+========================================
+SPEC CHANGE FOR V1
+========================================
+
+Compared to v0, this version removes ambiguity in the timer workflow.
+The project now defines a single active session rule, an exact timestamp format,
+and a persistent session log format. These clarifications make start/stop behavior
+testable and consistent.
