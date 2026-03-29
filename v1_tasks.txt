@@ -1,0 +1,4 @@
+V1 TASK LIST
+1. Implement the stop command so an active timer can be completed.
+2. Store completed sessions in a log file for later inspection.
+3. Add a stats command to summarize the recorded sessions.

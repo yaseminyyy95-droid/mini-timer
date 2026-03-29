@@ -1,0 +1,106 @@
+Güvenli Kimlik Doğrulama Sistemi ve Geometrik Hesaplama Sistemi - Spesifikasyon
+
+1. Teslim Dosyaları
+Bu proje üç dosyadan oluşur:
+- SPEC.txt
+- implementation.py
+- test_spec.py
+
+2. Güvenli Kimlik Doğrulama Sistemi
+
+2.1. Kullanıcı Modeli
+Her kullanıcı için aşağıdaki bilgiler tutulur:
+- username
+- password_hash
+- failed_attempts
+- locked
+- security_answer_hash
+- email
+
+Parolalar ve güvenlik sorusu cevapları açık metin olarak saklanmaz. SHA-256 ile hashlenmiş olarak tutulur.
+
+2.2. Şifre Maskeleme
+Sistem loglarında ve yardımcı çıktılarda parola açık şekilde gösterilmez.
+Maskeleme için parola uzunluğu kadar '*' karakteri üretilir.
+Örnek:
+"secret123" -> "*********"
+
+2.3. Giriş Kuralları
+- Kullanıcı adı ve şifre ile giriş yapılır.
+- Parola doğruysa failed_attempts sıfırlanır.
+- Parola yanlışsa failed_attempts 1 artırılır.
+- Maksimum hatalı deneme sayısı 3'tür.
+- 3 yanlış denemeden sonra hesap kilitlenir.
+- 2 ve üzeri başarısız denemeden sonra giriş öncesinde recaptcha doğrulaması gerekir.
+- Hesap kilitliyse de girişten önce recaptcha gerekir.
+- Bu ödevde recaptcha gerçek servis değildir. Rastgele metin üretip kullanıcıya aynı metni girdirtmeyi simüle eden bir mock yapı kullanılır.
+
+2.4. Şifremi Unuttum Akışı
+- Kullanıcı, kullanıcı adı ve güvenlik sorusu cevabı ile doğrulanır.
+- Güvenlik sorusu cevabı küçük yazım hatalarını tolere edecek şekilde fuzzy matching ile kontrol edilir.
+- Kabul kriteri: Levenshtein distance <= 1 ise cevap kabul edilir.
+- Doğrulama başarılıysa yeni parola hashlenerek kaydedilir.
+- Parola sıfırlanınca failed_attempts sıfırlanır ve locked = False yapılır.
+
+2.5. Fuzzy Matching Tasarımı
+- Karşılaştırma case-insensitive yapılır.
+- Baştaki ve sondaki boşluklar temizlenir.
+- Levenshtein distance kullanılır.
+- Mesafe 0 veya 1 ise eşleşme başarılı kabul edilir.
+Örnek:
+"Ankara" ile "ankara" -> başarılı
+"Ankara" ile "Ankera" -> başarılı
+"Ankara" ile "Izmir" -> başarısız
+
+3. Geometrik Çakışma ve Konum Hesaplama
+
+3.1. Nokta - Çember İlişkisi
+Girdi:
+- nokta: (x, y)
+- çember: merkez (c_x, c_y), yarıçap r
+
+Kural:
+- Nokta ile merkez arasındaki öklid uzaklığı hesaplanır.
+- Uzaklık < r ise "inside"
+- Uzaklık == r ise "boundary"
+- Uzaklık > r ise "outside"
+
+Tasarım kararı:
+Çember çevresi üzerindeki nokta içeride sayılmaz, ayrı olarak "boundary" döndürülür.
+
+3.2. Çember - Çember İlişkisi
+Girdi:
+- circle1: (x1, y1, r1)
+- circle2: (x2, y2, r2)
+
+Merkezler arası uzaklık d ile değerlendirme yapılır.
+
+Durumlar:
+- d > r1 + r2 -> "separate"
+- d == r1 + r2 -> "externally_tangent"
+- |r1 - r2| < d < r1 + r2 -> "intersecting"
+- d == |r1 - r2| ve çemberler özdeş değil -> "internally_tangent"
+- d < |r1 - r2| -> "contained"
+- d == 0 ve r1 == r2 -> "identical"
+
+Tasarım kararı:
+Bu projede yalnızca çember çizgilerinin kesişmesi değil, alan ilişkisi de dikkate alınır.
+Bu nedenle bir çember diğerinin tamamen içinde olsa bile, sınırlar değmiyorsa sonuç "contained" olarak ayrı bir durumdur.
+Yani "kesişme" ifadesi tek bir True/False yerine detaylı ilişki sınıflandırması ile ele alınmıştır.
+
+4. Hata Kontrolleri
+- Negatif yarıçap kabul edilmez, ValueError fırlatılır.
+- Boş kullanıcı adı kabul edilmez.
+- Boş parola kabul edilmez.
+
+5. Test Kapsamı
+Testler aşağıdakileri doğrular:
+- hash işlemi
+- parola maskeleme
+- başarılı ve başarısız giriş
+- recaptcha zorunluluğu
+- hesap kilitlenmesi
+- parola sıfırlama
+- fuzzy matching davranışı
+- nokta-çember sınıflandırması
+- çember-çember ilişki sınıflandırması
