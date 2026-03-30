@@ -1,106 +1,108 @@
-Güvenli Kimlik Doğrulama Sistemi ve Geometrik Hesaplama Sistemi - Spesifikasyon
+PROJECT: mini-timer
+AUTHOR: Yasemin (Student ID)
+VERSION: v2
+DATE: 2026-03-29
 
-1. Teslim Dosyaları
-Bu proje üç dosyadan oluşur:
-- SPEC.txt
-- implementation.py
-- test_spec.py
+========================================
+OVERVIEW
+========================================
 
-2. Güvenli Kimlik Doğrulama Sistemi
+mini-timer is a command-line Pomodoro timer and logging tool.
+It allows users to start and stop focus sessions, store session
+history, and view basic statistics.
 
-2.1. Kullanıcı Modeli
-Her kullanıcı için aşağıdaki bilgiler tutulur:
-- username
-- password_hash
-- failed_attempts
-- locked
-- security_answer_hash
-- email
+All data is stored in a directory called .minitimer/
+in the current working directory.
 
-Parolalar ve güvenlik sorusu cevapları açık metin olarak saklanmaz. SHA-256 ile hashlenmiş olarak tutulur.
+========================================
+COMMANDS
+========================================
 
-2.2. Şifre Maskeleme
-Sistem loglarında ve yardımcı çıktılarda parola açık şekilde gösterilmez.
-Maskeleme için parola uzunluğu kadar '*' karakteri üretilir.
-Örnek:
-"secret123" -> "*********"
+--- init ---
+Usage: python solution_v1.py init
+Creates a .minitimer/ directory and an empty sessions.dat file.
+If already exists, prints:
+"Already initialized"
 
-2.3. Giriş Kuralları
-- Kullanıcı adı ve şifre ile giriş yapılır.
-- Parola doğruysa failed_attempts sıfırlanır.
-- Parola yanlışsa failed_attempts 1 artırılır.
-- Maksimum hatalı deneme sayısı 3'tür.
-- 3 yanlış denemeden sonra hesap kilitlenir.
-- 2 ve üzeri başarısız denemeden sonra giriş öncesinde recaptcha doğrulaması gerekir.
-- Hesap kilitliyse de girişten önce recaptcha gerekir.
-- Bu ödevde recaptcha gerçek servis değildir. Rastgele metin üretip kullanıcıya aynı metni girdirtmeyi simüle eden bir mock yapı kullanılır.
+---
 
-2.4. Şifremi Unuttum Akışı
-- Kullanıcı, kullanıcı adı ve güvenlik sorusu cevabı ile doğrulanır.
-- Güvenlik sorusu cevabı küçük yazım hatalarını tolere edecek şekilde fuzzy matching ile kontrol edilir.
-- Kabul kriteri: Levenshtein distance <= 1 ise cevap kabul edilir.
-- Doğrulama başarılıysa yeni parola hashlenerek kaydedilir.
-- Parola sıfırlanınca failed_attempts sıfırlanır ve locked = False yapılır.
+--- start ---
+Usage: python solution_v1.py start
+Starts a new timer session.
+Stores the start timestamp.
+Prints:
+"Timer started"
 
-2.5. Fuzzy Matching Tasarımı
-- Karşılaştırma case-insensitive yapılır.
-- Baştaki ve sondaki boşluklar temizlenir.
-- Levenshtein distance kullanılır.
-- Mesafe 0 veya 1 ise eşleşme başarılı kabul edilir.
-Örnek:
-"Ankara" ile "ankara" -> başarılı
-"Ankara" ile "Ankera" -> başarılı
-"Ankara" ile "Izmir" -> başarısız
+If not initialized:
+"Not initialized. Run: python solution_v1.py init"
 
-3. Geometrik Çakışma ve Konum Hesaplama
+---
 
-3.1. Nokta - Çember İlişkisi
-Girdi:
-- nokta: (x, y)
-- çember: merkez (c_x, c_y), yarıçap r
+--- stop ---
+Usage: python solution_v1.py stop
+Stops the active timer session and records duration.
+Prints:
+"Session saved"
 
-Kural:
-- Nokta ile merkez arasındaki öklid uzaklığı hesaplanır.
-- Uzaklık < r ise "inside"
-- Uzaklık == r ise "boundary"
-- Uzaklık > r ise "outside"
+If no active session:
+"No active session"
 
-Tasarım kararı:
-Çember çevresi üzerindeki nokta içeride sayılmaz, ayrı olarak "boundary" döndürülür.
+---
 
-3.2. Çember - Çember İlişkisi
-Girdi:
-- circle1: (x1, y1, r1)
-- circle2: (x2, y2, r2)
+--- log ---
+Usage: python solution_v1.py log
+Displays all recorded sessions.
+Each session format:
+[start_time] - [duration_seconds]
 
-Merkezler arası uzaklık d ile değerlendirme yapılır.
+If no sessions:
+"No sessions found"
 
-Durumlar:
-- d > r1 + r2 -> "separate"
-- d == r1 + r2 -> "externally_tangent"
-- |r1 - r2| < d < r1 + r2 -> "intersecting"
-- d == |r1 - r2| ve çemberler özdeş değil -> "internally_tangent"
-- d < |r1 - r2| -> "contained"
-- d == 0 ve r1 == r2 -> "identical"
+---
 
-Tasarım kararı:
-Bu projede yalnızca çember çizgilerinin kesişmesi değil, alan ilişkisi de dikkate alınır.
-Bu nedenle bir çember diğerinin tamamen içinde olsa bile, sınırlar değmiyorsa sonuç "contained" olarak ayrı bir durumdur.
-Yani "kesişme" ifadesi tek bir True/False yerine detaylı ilişki sınıflandırması ile ele alınmıştır.
+--- stats ---
+Usage: python solution_v1.py stats
+Displays statistics about sessions:
+- Total number of sessions
+- Total focus time (seconds)
 
-4. Hata Kontrolleri
-- Negatif yarıçap kabul edilmez, ValueError fırlatılır.
-- Boş kullanıcı adı kabul edilmez.
-- Boş parola kabul edilmez.
+Example output:
+"Sessions: 3 | Total time: 1500 seconds"
 
-5. Test Kapsamı
-Testler aşağıdakileri doğrular:
-- hash işlemi
-- parola maskeleme
-- başarılı ve başarısız giriş
-- recaptcha zorunluluğu
-- hesap kilitlenmesi
-- parola sıfırlama
-- fuzzy matching davranışı
-- nokta-çember sınıflandırması
-- çember-çember ilişki sınıflandırması
+If no data:
+"No statistics available"
+
+========================================
+DATA FORMAT
+========================================
+
+File: .minitimer/sessions.dat
+
+Each session is stored as:
+start_timestamp|duration_seconds
+
+Example:
+1711730000|1500
+1711732000|1200
+
+========================================
+ERROR HANDLING
+========================================
+
+- Running commands before init:
+  "Not initialized. Run: python solution_v1.py init"
+
+- Unknown command:
+  "Unknown command: <command>"
+
+- Missing arguments:
+  "Usage: python solution_v1.py <command>"
+
+========================================
+DESIGN DECISIONS
+========================================
+
+- Only one active session can exist at a time.
+- Time is stored as UNIX timestamp.
+- Duration is calculated in seconds.
+- Data is stored in plain text for simplicity.
